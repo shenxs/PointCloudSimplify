@@ -196,6 +196,13 @@ void MyGLWidget::averageSimplify(double cellLength) {
   updateStateAfterSimplify();
 }
 
+void MyGLWidget::averageSimplifyDBSCAN(double s) {
+  data = pointcloud->averageSimplifyDBSCAN((float)s);
+  emit celllengthChange((float)s);
+  updatedata();
+  updateStateAfterSimplify();
+}
+
 void MyGLWidget::updateStateAfterSimplify() {
   std::string str("点云模型：" + std::to_string(pointcloud->data.size() / 3) +
                   "点，" + "简化后：" + std::to_string(data.size() / 3) + "点");

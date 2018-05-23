@@ -11,9 +11,12 @@ private:
   int yit[8] = {1, -1, 1, -1, 1, -1, 1, -1};
   int zit[8] = {1, 1, -1, -1, 1, 1, -1, -1};
 
+  float cellLength;
+
   void set8childNull();
   void matrixSolver(const float mat[], float *answer);
   float valueOfMat3(const float mat[]);
+  float distanceOfV3(Point<float> a, Point<float> b);
 
 public:
   int depth = 0;
@@ -27,6 +30,7 @@ public:
   ~Octree();
 
   Point<float> getAverageOfPoints();
+  std::vector<float> getDBSCANPoints();
   float calculateCurvature();
 };
 

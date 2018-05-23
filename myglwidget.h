@@ -19,8 +19,6 @@ public:
   void setPointCloud(std::string path);
   void updatedata();
 
-  void curvSimplify(float cellLength = 0.05f, float curve = 30);
-
 protected:
   void initializeGL() override;
   void resizeGL(int w, int h) override;
@@ -36,6 +34,8 @@ public slots:
   void setZRotation(int angle);
   void setScale(float s);
   void averageSimplify(double s = 0.05);
+  void averageSimplifyDBSCAN(double s = 0.05f);
+  void curvSimplify(float cellLength = 0.05f, float curve = 30);
 
 signals:
   void xRotationChanged(int angle);

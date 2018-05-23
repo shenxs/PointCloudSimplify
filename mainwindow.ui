@@ -114,7 +114,14 @@
     <property name="title">
      <string>简化</string>
     </property>
-    <addaction name="averageSimplify"/>
+    <widget class="QMenu" name="menu_3">
+     <property name="title">
+      <string>均匀简化</string>
+     </property>
+     <addaction name="action"/>
+     <addaction name="action_2"/>
+    </widget>
+    <addaction name="menu_3"/>
     <addaction name="curvSimplify"/>
    </widget>
    <addaction name="menu"/>
@@ -129,14 +136,19 @@
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="averageSimplify">
-   <property name="text">
-    <string>均匀简化</string>
-   </property>
-  </action>
   <action name="curvSimplify">
    <property name="text">
     <string>曲率简化</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>重心</string>
+   </property>
+  </action>
+  <action name="action_2">
+   <property name="text">
+    <string>聚类</string>
    </property>
   </action>
  </widget>

@@ -53,12 +53,6 @@ void MainWindow::on_openfile_triggered() {
   ui->curve->setVisible(false);
 }
 
-void MainWindow::on_averageSimplify_triggered() {
-  ui->cellLength->setVisible(true);
-  ui->curve->setVisible(false);
-  glwidget->averageSimplify();
-}
-
 void MainWindow::on_curvSimplify_triggered() {
   ui->cellLength->setVisible(true);
   ui->curve->setVisible(true);
@@ -101,3 +95,11 @@ void MainWindow::on_cellLength_valueChanged(double arg1) {
 void MainWindow::setStatusMessage(const QString &mess, int timeout) {
   statusLabel->setText(mess);
 }
+
+void MainWindow::on_action_triggered() {
+  ui->cellLength->setVisible(true);
+  ui->curve->setVisible(false);
+  glwidget->averageSimplify();
+}
+
+void MainWindow::on_action_2_triggered() { glwidget->averageSimplifyDBSCAN(); }

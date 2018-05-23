@@ -27,6 +27,7 @@ public:
   void normolize(); //将数据标准化，映射到-1～1之间
   std::vector<float> averageSimplify(float miniLength);
   std::vector<float> curvatureSimplify(float miniLength, float miniCurva);
+  std::vector<float> averageSimplifyDBSCAN(float miniLength);
 };
 
 #endif // POINTCLOUD_H

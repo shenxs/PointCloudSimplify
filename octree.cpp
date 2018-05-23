@@ -1,8 +1,6 @@
 #include "octree.h"
 
-Octree::Octree() {
-  //    this->set8childNull();
-}
+Octree::Octree() { this->set8childNull(); }
 
 Octree::~Octree() {
   for (int i = 0; i < 8; i++) {
@@ -11,9 +9,11 @@ Octree::~Octree() {
     }
   }
 }
+
 Octree::Octree(const std::vector<float> &pointCloudArry,
                Point<float> orignalPoint, float miniLength,
                float currentLength) {
+  cellLength = currentLength;
   if (currentLength <= miniLength) { //递归终止条件
     data = pointCloudArry;
     set8childNull();
@@ -75,6 +75,130 @@ Point<float> Octree::getAverageOfPoints() {
     return Point<float>(0, 0, 0);
   }
 }
+
+//获取当前节点的聚类平均值
+std::vector<float> Octree::getDBSCANPoints() {
+  int thereshold = 3;         //一个核心点周围最少的点数
+  float eps = cellLength / 4; //核心点最大距离上限
+
+  std::vector<float> result;
+  unsigned long size = data.size() / 3;
+  if (size < thereshold) {
+    return data;
+  } else {
+
+    float *distances = new float[size * size]; //每个点之间的距离
+    int *count = new int[size];                //满足调节的周围点
+    int *flag = new int[size];           //边缘点记录对应的核心点
+    float *setSum = new float[size * 3]; //求和
+    int *setcount = new int[size];       //计数
+
+    std::vector<int> keyPointList; //关键点
+    std::vector<int> sets;
+
+    for (int i = 0; i < size; i++) {
+      count[i] = 0;
+      flag[i] = -1;
+      setSum[i] = setSum[i + 1] = setSum[i + 2] = 0;
+      setcount[i] = 0;
+    }
+    //计算所有点之间的欧式距离
+    for (int i = 0; i < size - 1; i++) {
+      for (int j = i + 1; j < size; j++) {
+        distances[i * size + j] = distanceOfV3(
+            Point<float>(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]),
+            Point<float>(data[3 * j], data[3 * j + 1], data[3 * j + 2]));
+        distances[j * size + i] = distances[i * size + j];
+      }
+    }
+
+    //找出核心点，边界点，噪点
+    for (int i = 0; i < size - 1; i++) {
+      for (int j = i + 1; j < size; j++) {
+        if (distances[i * size + j] < eps) {
+          count[i]++;
+          if (count[i] > 0 && count[i] < thereshold) {
+            //边界点
+            flag[i] = j; //记录边界点
+          }
+          if (count[i] >= thereshold) { //核心点
+            flag[i] = -1;
+            keyPointList.push_back(i);
+          }
+
+          count[j]++;
+          if (count[j] > 0 && count[j] < thereshold) {
+            //边界点
+            flag[j] = i; //记录边界点
+          }
+          if (count[j] >= thereshold) {
+            flag[j] = -1;
+            keyPointList.push_back(j);
+          }
+        }
+      }
+    }
+
+    for (int i = 0; i < size; i++) {
+      if (count[i] < thereshold) {
+        //边界点
+        if (count[flag[i]] < thereshold) {
+          flag[i] = -1;
+        }
+      }
+    }
+
+    //作并查集
+    for (int i = 0; i < keyPointList.size(); i++) {
+      bool findRoot = false;
+      for (int j = i - 1; j >= 0; j--) {
+        if (distances[keyPointList[i] * size + keyPointList[j]] < eps) {
+          findRoot = true;
+          flag[keyPointList[i]] = flag[keyPointList[j]];
+          break;
+        }
+      }
+      if (!findRoot) {
+        flag[keyPointList[i]] = keyPointList[i];
+        sets.push_back(keyPointList[i]);
+      }
+    }
+
+    //边缘点指向根结点
+    for (int i = 0; i < size; i++) {
+      if (flag[i] != -1) {
+        int temp = flag[i];
+        while (temp != flag[temp]) {
+          temp = flag[temp];
+        }
+        flag[i] = temp;
+      }
+    }
+
+    for (int i = 0; i < size; i++) {
+      if (flag[i] != -1) {
+        setcount[flag[i]]++;
+        setSum[flag[i]] += data[i];
+        setSum[flag[i] + 1] += data[i + 1];
+        setSum[flag[i] + 2] += data[i + 2];
+      }
+    }
+
+    for (int i = 0; i < sets.size(); i++) {
+      result.push_back(setSum[sets[i]] / setcount[sets[i]]);
+      result.push_back(setSum[sets[i] + 1] / setcount[sets[i]]);
+      result.push_back(setSum[sets[i] + 2] / setcount[sets[i]]);
+    }
+
+    delete[] setcount;
+    delete[] setSum;
+    delete[] count;
+    delete[] flag;
+    delete[] distances;
+    return result;
+  }
+}
+
 //计算当前的节点的曲率
 float Octree::calculateCurvature() {
   if (data.size() < 4) { //当前节点的数目不足以进行球面拟合
@@ -144,6 +268,7 @@ float Octree::valueOfMat3(const float *mat) {
          mat[1] * (mat[3] * mat[8] - mat[5] * mat[6]) +
          mat[2] * (mat[3] * mat[7] - mat[4] * mat[6]);
 }
+
 void Octree::matrixSolver(const float mat[], float *answer) {
   float D, D1, D2, D3;
   D = D1 = D2 = D3 = 0.0;
@@ -169,4 +294,11 @@ void Octree::matrixSolver(const float mat[], float *answer) {
   answer[0] = D1 / D;
   answer[1] = D2 / D;
   answer[2] = D3 / D;
+}
+
+float Octree::distanceOfV3(Point<float> a, Point<float> b) {
+  float dx = a.x - b.x;
+  float dy = a.y - b.y;
+  float dz = a.z - b.z;
+  return sqrt(dx * dx + dy * dy + dz * dz);
 }

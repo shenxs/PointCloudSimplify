@@ -111,7 +111,7 @@ std::vector<float> PointCloud::curvatureSimplify(float miniLength,
       }
       if (temp->data.size() != 0) {
         float curv = temp->calculateCurvature();
-        std::cout << curv << std::endl;
+        //        std::cout << curv << std::endl;
         if (curv > miniCurva) {
           for (unsigned int i = 0; i < temp->data.size(); i++) {
             result.push_back(temp->data[i]);
@@ -121,6 +121,35 @@ std::vector<float> PointCloud::curvatureSimplify(float miniLength,
           result.push_back(p.x);
           result.push_back(p.y);
           result.push_back(p.z);
+        }
+      }
+      q.pop();
+    }
+    return result;
+  }
+}
+
+std::vector<float> PointCloud::averageSimplifyDBSCAN(float miniLength) {
+  if (miniLength >= 1 || miniLength <= 0) {
+    return data;
+  } else {
+    std::vector<float> result;
+    buidTree(miniLength);
+    std::queue<Octree *> q;
+    Octree *temp = nullptr;
+    q.push(treeRoot);
+    while (!q.empty()) {
+      temp = q.front();
+      for (int i = 0; i < 8; i++) {
+        if (temp->childs[i] != nullptr) {
+          q.push(temp->childs[i]);
+        }
+      }
+      //将节点的聚类平均值加入结果中
+      if (temp->data.size() != 0) {
+        std::vector<float> jl = temp->getDBSCANPoints();
+        for (int i = 0; i < jl.size(); i++) {
+          result.push_back(jl[i]);
         }
       }
       q.pop();

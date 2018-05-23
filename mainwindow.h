@@ -19,13 +19,16 @@ public:
 
 private slots:
   void on_openfile_triggered();
-  void on_averageSimplify_triggered();
   void on_curvSimplify_triggered();
   void on_curve_valueChanged(double arg1);
   void setCell(double);
   void setCurv(float);
   void on_cellLength_valueChanged(double arg1);
   void setStatusMessage(const QString &mess, int timeout = 0);
+
+  void on_action_triggered();
+
+  void on_action_2_triggered();
 
 private:
   Ui::MainWindow *ui;
