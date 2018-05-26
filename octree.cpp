@@ -178,7 +178,7 @@ std::vector<float> Octree::getDBSCANPoints() {
       int size = sets[i].size();
       for (int j = 0; j < size; j++) {
         for (int k = 0; k < 3; k++) {
-          sum[k] += data[sets[i][j] + k];
+          sum[k] += data[sets[i][j] * 3 + k];
         }
       }
       for (int i = 0; i < 3; i++) {
