@@ -89,7 +89,7 @@ std::vector<float> Octree::getDBSCANPoints() {
   int size = data.size() / 3;
 
   if (size <= thereshold) {
-    return data;
+    return result;
   } else {
 
     float *distances = new float[size * size]; //每个点之间的距离
@@ -107,7 +107,7 @@ std::vector<float> Octree::getDBSCANPoints() {
     }
     //计算所有点之间的欧式距离
     for (unsigned int i = 0; i < size - 1; i++) {
-      for (int j = i + 1; j < size; j++) {
+      for (int j = i + 3; j < size; j++) {
         float temp = distanceOfV3(
             Point<float>(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]),
             Point<float>(data[3 * j], data[3 * j + 1], data[3 * j + 2]));
