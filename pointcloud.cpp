@@ -55,7 +55,8 @@ void PointCloud::normolize() {
 
 void PointCloud::buidTree(float miniLength) {
   if (treeRoot != nullptr) {
-    delete treeRoot;
+    treeRoot->~Octree();
+    //    delete treeRoot;
   }
   treeRoot = new Octree(data, Point<float>(0.0, 0.0, 0.0), miniLength, 2.0);
 }

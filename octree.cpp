@@ -1,5 +1,9 @@
 #include "octree.h"
 
+#include <queue>
+#include <set>
+#include <stack>
+
 Octree::Octree() { this->set8childNull(); }
 
 Octree::~Octree() {
@@ -78,122 +82,110 @@ Point<float> Octree::getAverageOfPoints() {
 
 //获取当前节点的聚类平均值
 std::vector<float> Octree::getDBSCANPoints() {
-  int thereshold = 3;         //一个核心点周围最少的点数
-  float eps = cellLength / 4; //核心点最大距离上限
+  unsigned int thereshold = 3; //一个核心点周围最少的点数
+  float eps = cellLength / 5;  //核心点最大距离上限
 
   std::vector<float> result;
-  unsigned long size = data.size() / 3;
-  if (size < thereshold) {
+  int size = data.size() / 3;
+
+  if (size <= thereshold) {
     return data;
   } else {
 
     float *distances = new float[size * size]; //每个点之间的距离
-    int *count = new int[size];                //满足调节的周围点
-    int *flag = new int[size];           //边缘点记录对应的核心点
-    float *setSum = new float[size * 3]; //求和
-    int *setcount = new int[size];       //计数
 
-    std::vector<int> keyPointList; //关键点
-    std::vector<int> sets;
+    std::vector<int> flags(size);     //记录是否核心点
+    std::vector<bool> keyPoint(size); //关键点
+    std::vector<std::vector<int>> sets;
+    std::vector<std::vector<int>> nearby(size);
+    std::vector<bool> added(size);
 
-    for (int i = 0; i < size; i++) {
-      count[i] = 0;
-      flag[i] = -1;
-      setSum[i] = setSum[i + 1] = setSum[i + 2] = 0;
-      setcount[i] = 0;
+    for (unsigned int i = 0; i < size; i++) {
+      distances[i * size + i] = 0.0f;
+      flags[i] = -1;
+      added[i] = false;
     }
     //计算所有点之间的欧式距离
-    for (int i = 0; i < size - 1; i++) {
+    for (unsigned int i = 0; i < size - 1; i++) {
       for (int j = i + 1; j < size; j++) {
-        distances[i * size + j] = distanceOfV3(
+        float temp = distanceOfV3(
             Point<float>(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]),
             Point<float>(data[3 * j], data[3 * j + 1], data[3 * j + 2]));
-        distances[j * size + i] = distances[i * size + j];
+        distances[i * size + j] = temp;
+        if (temp < eps) {
+          nearby[i].push_back(j);
+          nearby[j].push_back(i);
+        }
       }
     }
 
-    //找出核心点，边界点，噪点
-    for (int i = 0; i < size - 1; i++) {
-      for (int j = i + 1; j < size; j++) {
-        if (distances[i * size + j] < eps) {
-          count[i]++;
-          if (count[i] > 0 && count[i] < thereshold) {
-            //边界点
-            flag[i] = j; //记录边界点
-          }
-          if (count[i] >= thereshold) { //核心点
-            flag[i] = -1;
-            keyPointList.push_back(i);
-          }
+    //找到核心点
+    for (unsigned int i = 0; i < size; i++) {
+      if (nearby[i].size() >= thereshold) {
+        keyPoint[i] = true;
+        flags[i] = i;
+      }
+    }
 
-          count[j]++;
-          if (count[j] > 0 && count[j] < thereshold) {
-            //边界点
-            flag[j] = i; //记录边界点
-          }
-          if (count[j] >= thereshold) {
-            flag[j] = -1;
-            keyPointList.push_back(j);
+    //找到边缘点
+    for (unsigned int i = 0; i < size; i++) {
+      if (nearby[i].size() > 0 && nearby[i].size() < thereshold) {
+        for (int j = 0; j < nearby[i].size(); j++) {
+          int temp = nearby[i][j];
+          if (keyPoint[temp]) {
+            flags[i] = temp;
+            break;
           }
         }
       }
     }
 
+    //并查集
     for (int i = 0; i < size; i++) {
-      if (count[i] < thereshold) {
-        //边界点
-        if (count[flag[i]] < thereshold) {
-          flag[i] = -1;
+      std::stack<int> s;
+
+      if (flags[i] != -1 && added[i] == false) {
+        s.push(i);
+        added[i] = true;
+        std::vector<int> aset;
+        while (!s.empty()) {
+          int temp = s.top();
+          aset.push_back(temp);
+          s.pop();
+          if (keyPoint[temp]) { //关键点可以压入的全部压栈
+            for (int j = 0; j < nearby[temp].size(); j++) {
+              if (!added[nearby[temp][j]] && keyPoint[nearby[temp][j]]) {
+                s.push(nearby[temp][j]);
+                added[nearby[temp][j]] = true;
+              }
+            }
+          } else { //边缘点,只将所指关键点压入
+            if (!added[flags[temp]]) {
+              s.push(flags[temp]);
+              added[flags[temp]] = true;
+            }
+          }
+        }
+        if (!aset.empty()) {
+          sets.push_back(aset);
         }
       }
     }
 
-    //作并查集
-    for (int i = 0; i < keyPointList.size(); i++) {
-      bool findRoot = false;
-      for (int j = i - 1; j >= 0; j--) {
-        if (distances[keyPointList[i] * size + keyPointList[j]] < eps) {
-          findRoot = true;
-          flag[keyPointList[i]] = flag[keyPointList[j]];
-          break;
-        }
-      }
-      if (!findRoot) {
-        flag[keyPointList[i]] = keyPointList[i];
-        sets.push_back(keyPointList[i]);
-      }
-    }
-
-    //边缘点指向根结点
-    for (int i = 0; i < size; i++) {
-      if (flag[i] != -1) {
-        int temp = flag[i];
-        while (temp != flag[temp]) {
-          temp = flag[temp];
-        }
-        flag[i] = temp;
-      }
-    }
-
-    for (int i = 0; i < size; i++) {
-      if (flag[i] != -1) {
-        setcount[flag[i]]++;
-        setSum[flag[i]] += data[i];
-        setSum[flag[i] + 1] += data[i + 1];
-        setSum[flag[i] + 2] += data[i + 2];
-      }
-    }
-
+    //计算平均点
     for (int i = 0; i < sets.size(); i++) {
-      result.push_back(setSum[sets[i]] / setcount[sets[i]]);
-      result.push_back(setSum[sets[i] + 1] / setcount[sets[i]]);
-      result.push_back(setSum[sets[i] + 2] / setcount[sets[i]]);
+      float sum[3] = {0.0};
+      int size = sets[i].size();
+      for (int j = 0; j < size; j++) {
+        for (int k = 0; k < 3; k++) {
+          sum[k] += data[sets[i][j] + k];
+        }
+      }
+      for (int i = 0; i < 3; i++) {
+        result.push_back(sum[i] / size);
+      }
     }
 
-    delete[] setcount;
-    delete[] setSum;
-    delete[] count;
-    delete[] flag;
     delete[] distances;
     return result;
   }

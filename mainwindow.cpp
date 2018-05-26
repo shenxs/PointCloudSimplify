@@ -54,6 +54,7 @@ void MainWindow::on_openfile_triggered() {
 }
 
 void MainWindow::on_curvSimplify_triggered() {
+  currentSimplify = curva;
   ui->cellLength->setVisible(true);
   ui->curve->setVisible(true);
   glwidget->curvSimplify();
@@ -85,10 +86,17 @@ void MainWindow::setCurv(float val) {
 }
 
 void MainWindow::on_cellLength_valueChanged(double arg1) {
-  if (ui->curve->isVisible()) {
+
+  switch (currentSimplify) {
+  case curva:
     glwidget->curvSimplify(arg1, ui->curve->value());
-  } else {
+    break;
+  case average:
     glwidget->averageSimplify(arg1);
+    break;
+  case averagedbscan:
+    glwidget->averageSimplifyDBSCAN(arg1);
+    break;
   }
 }
 
@@ -97,9 +105,13 @@ void MainWindow::setStatusMessage(const QString &mess, int timeout) {
 }
 
 void MainWindow::on_action_triggered() {
+  currentSimplify = average;
   ui->cellLength->setVisible(true);
   ui->curve->setVisible(false);
   glwidget->averageSimplify();
 }
 
-void MainWindow::on_action_2_triggered() { glwidget->averageSimplifyDBSCAN(); }
+void MainWindow::on_action_2_triggered() {
+  currentSimplify = averagedbscan;
+  glwidget->averageSimplifyDBSCAN();
+}

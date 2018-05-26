@@ -126,7 +126,7 @@ void MyGLWidget::wheelEvent(QWheelEvent *event) {
     m_scale *= 0.5;
     update();
   }
-  std::cout << m_scale << std::endl;
+  //  std::cout << m_scale << std::endl;
 }
 
 void MyGLWidget::setXRotation(int angle) {

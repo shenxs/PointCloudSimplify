@@ -25,9 +25,7 @@ private slots:
   void setCurv(float);
   void on_cellLength_valueChanged(double arg1);
   void setStatusMessage(const QString &mess, int timeout = 0);
-
   void on_action_triggered();
-
   void on_action_2_triggered();
 
 private:
@@ -37,6 +35,8 @@ private:
   QSlider *ySlider;
   QSlider *zSlider;
   QLabel *statusLabel;
+  enum SimplifyFun { no, average, averagedbscan, curva };
+  SimplifyFun currentSimplify;
 
   QSlider *createVerticalSlider();
 };

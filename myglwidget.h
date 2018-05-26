@@ -33,9 +33,9 @@ public slots:
   void setYRotation(int angle);
   void setZRotation(int angle);
   void setScale(float s);
-  void averageSimplify(double s = 0.05);
-  void averageSimplifyDBSCAN(double s = 0.05f);
-  void curvSimplify(float cellLength = 0.05f, float curve = 30);
+  void averageSimplify(double s = 0.03f);
+  void averageSimplifyDBSCAN(double s = 0.03f);
+  void curvSimplify(float cellLength = 0.03f, float curve = 30);
 
 signals:
   void xRotationChanged(int angle);
