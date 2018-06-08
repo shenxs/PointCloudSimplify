@@ -18,6 +18,7 @@ public:
   ~MyGLWidget();
   void setPointCloud(std::string path);
   void updatedata();
+  void setDisplayPercent(int percent);
 
 protected:
   void initializeGL() override;
@@ -33,9 +34,9 @@ public slots:
   void setYRotation(int angle);
   void setZRotation(int angle);
   void setScale(float s);
-  void averageSimplify(double s = 0.05f);
-  void averageSimplifyDBSCAN(double s = 0.05f);
-  void curvSimplify(float cellLength = 0.03f, float curve = 30);
+  void averageSimplify(double s = 0.03f);
+  void averageSimplifyDBSCAN(double s = 0.03f);
+  void curvSimplify(int percent = 50);
 
 signals:
   void xRotationChanged(int angle);
@@ -53,6 +54,7 @@ private:
   int m_projMatrixLoc;
   int m_modelMatrixLoc;
   int m_viewMatrixLoc;
+  float displayPercent; //展示的点的百分比，0～1
   QPoint m_lastPos;
   QMatrix4x4 m_proj;
   QMatrix4x4 m_view;

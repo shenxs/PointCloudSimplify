@@ -49,15 +49,15 @@ void MainWindow::on_openfile_triggered() {
       this, tr("选择模型文件"), "./", tr("点云模型 (*.xyz)"));
   std::cout << modelFilePath.toStdString() << std::endl;
   glwidget->setPointCloud(modelFilePath.toStdString());
+  glwidget->setDisplayPercent(100);
   ui->cellLength->setVisible(false);
   ui->curve->setVisible(false);
 }
 
 void MainWindow::on_curvSimplify_triggered() {
   currentSimplify = curva;
-  ui->cellLength->setVisible(true);
   ui->curve->setVisible(true);
-  glwidget->curvSimplify();
+  glwidget->curvSimplify(ui->curve->value());
 }
 
 QSlider *MainWindow::createVerticalSlider() {
@@ -71,8 +71,7 @@ QSlider *MainWindow::createVerticalSlider() {
 }
 
 void MainWindow::on_curve_valueChanged(double arg1) {
-  double cell = ui->cellLength->value();
-  glwidget->curvSimplify(cell, arg1);
+  glwidget->setDisplayPercent(arg1);
 }
 
 void MainWindow::setCell(double val) {
@@ -86,10 +85,9 @@ void MainWindow::setCurv(float val) {
 }
 
 void MainWindow::on_cellLength_valueChanged(double arg1) {
-
   switch (currentSimplify) {
   case curva:
-    glwidget->curvSimplify(arg1, ui->curve->value());
+    glwidget->curvSimplify(arg1);
     break;
   case average:
     glwidget->averageSimplify(arg1);
@@ -108,10 +106,14 @@ void MainWindow::on_action_triggered() {
   currentSimplify = average;
   ui->cellLength->setVisible(true);
   ui->curve->setVisible(false);
-  glwidget->averageSimplify();
+  glwidget->setDisplayPercent(100);
+  glwidget->averageSimplify(ui->cellLength->value());
 }
 
 void MainWindow::on_action_2_triggered() {
   currentSimplify = averagedbscan;
-  glwidget->averageSimplifyDBSCAN();
+  ui->cellLength->setVisible(true);
+  ui->curve->setVisible(false);
+  glwidget->setDisplayPercent(100);
+  glwidget->averageSimplifyDBSCAN(ui->cellLength->value());
 }

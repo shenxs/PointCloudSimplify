@@ -30,6 +30,7 @@ static void qNormalizeAngle(int &angle) {
 
 void MyGLWidget::initializeGL() //此处开始对OpenGL进行所以设置
 {
+  displayPercent = 1;
   initializeOpenGLFunctions();
   m_program = new QOpenGLShaderProgram(this);
   m_program->addShaderFromSourceFile(
@@ -49,8 +50,13 @@ void MyGLWidget::initializeGL() //此处开始对OpenGL进行所以设置
   updatedata();
 
   QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
+  //位置参数
   f->glEnableVertexAttribArray(0);
-  f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+  f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), 0);
+  //颜色参数
+  f->glEnableVertexAttribArray(1);
+  f->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat),
+                           (void *)(3 * sizeof(float)));
   glPointSize(1);
 
   m_view.setToIdentity();
@@ -77,9 +83,7 @@ void MyGLWidget::paintGL() //从这里开始进行所以的绘制
 
   glClearColor(1.0, 1.0, 1.0, 1.0);
 
-  //  m_proj.setToIdentity();
   m_model.setToIdentity();
-  //  m_view.setToIdentity();
 
   m_model.rotate(m_yRot / 16, 1, 0, 0);
   m_model.rotate(m_xRot / 16, 0, 1, 0);
@@ -93,7 +97,7 @@ void MyGLWidget::paintGL() //从这里开始进行所以的绘制
   m_program->setUniformValue(m_viewMatrixLoc, m_view);
   m_program->setUniformValue(m_projMatrixLoc, m_proj);
 
-  glDrawArrays(GL_POINTS, 0, data.size() / 3);
+  glDrawArrays(GL_POINTS, 0, data.size() / 6 * displayPercent);
 
   m_program->release();
 }
@@ -169,8 +173,17 @@ void MyGLWidget::setPointCloud(std::string path) {
     }
     pointcloud = new PointCloud(std::string(path));
   }
-  data = pointcloud->data;
-  std::string str("当前的点云模型包含" + std::to_string(data.size() / 3) +
+  std::vector<float> temp = pointcloud->data;
+  data.clear();
+  for (int i = 1; i <= temp.size(); i++) {
+    data.push_back(temp[i - 1]);
+    if (i % 3 == 0) {
+      data.push_back(0);
+      data.push_back(0);
+      data.push_back(0);
+    }
+  }
+  std::string str("当前的点云模型包含" + std::to_string(data.size() / 6) +
                   "个点");
   QString currentState = QString::fromStdString(str);
   emit showCurrentStatus(currentState);
@@ -189,31 +202,39 @@ void MyGLWidget::updatedata() {
   update();
 }
 
+void MyGLWidget::setDisplayPercent(int percent) {
+  displayPercent = percent / 100.0f;
+  std::cout << displayPercent << std::endl;
+  update();
+}
+
 void MyGLWidget::averageSimplify(double cellLength) {
+  displayPercent = 1;
   data = pointcloud->averageSimplify((float)cellLength);
-  emit celllengthChange((float)cellLength);
+
+  //  emit celllengthChange((float)cellLength);
   updatedata();
   updateStateAfterSimplify();
 }
 
 void MyGLWidget::averageSimplifyDBSCAN(double s) {
+  displayPercent = 1;
   data = pointcloud->averageSimplifyDBSCAN((float)s);
-  emit celllengthChange((float)s);
+  //  emit celllengthChange((float)s);
+  updatedata();
+  updateStateAfterSimplify();
+}
+
+void MyGLWidget::curvSimplify(int percent) {
+  data = pointcloud->curvatureSimplify();
+  this->displayPercent = percent / 100.0f;
   updatedata();
   updateStateAfterSimplify();
 }
 
 void MyGLWidget::updateStateAfterSimplify() {
   std::string str("点云模型：" + std::to_string(pointcloud->data.size() / 3) +
-                  "点，" + "简化后：" + std::to_string(data.size() / 3) + "点");
+                  "点，" + "简化后：" + std::to_string(data.size() / 6) + "点");
   QString currentState = QString::fromStdString(str);
   emit showCurrentStatus(currentState);
-}
-
-void MyGLWidget::curvSimplify(float cellLength, float curve) {
-  data = pointcloud->curvatureSimplify(cellLength, curve);
-  emit celllengthChange((float)cellLength);
-  emit curvChange(curve);
-  updatedata();
-  updateStateAfterSimplify();
 }

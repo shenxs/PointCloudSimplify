@@ -28,21 +28,23 @@ SOURCES += \
         mainwindow.cpp \
         myglwidget.cpp \
     pointcloud.cpp \
-    octree.cpp
+    octree.cpp \
+    colormap.cpp
 
 HEADERS += \
         mainwindow.h \
         myglwidget.h \
     pointcloud.h \
     point.h \
-    octree.h
+    octree.h \
+    colormap.h
 
 FORMS += \
         mainwindow.ui
 
 QT += opengl
 
-LIBS += -lglut -lGLU
+
 
 DISTFILES += \
     shader.frag \

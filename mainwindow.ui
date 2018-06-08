@@ -82,13 +82,22 @@
         </rect>
        </property>
        <property name="toolTip">
-        <string>八叉树节点曲率下限</string>
+        <string>简化百分比</string>
+       </property>
+       <property name="decimals">
+        <number>0</number>
+       </property>
+       <property name="minimum">
+        <double>1.000000000000000</double>
        </property>
        <property name="maximum">
-        <double>9999.989999999999782</double>
+        <double>100.000000000000000</double>
        </property>
        <property name="singleStep">
         <double>1.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>100.000000000000000</double>
        </property>
       </widget>
      </widget>
